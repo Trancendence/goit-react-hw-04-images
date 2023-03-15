@@ -1,90 +1,68 @@
-import { Component } from 'react';
 import { getElement } from './Service/Api';
 import { Searchbar } from './Searchbar/Searchbar';
 import { Modal } from './Modal/Modal';
 import { ImageGallery } from './ImageGallery/ImageGallery';
-
 import { Button } from './Button/button';
 import { Loader } from './Loader/Loader';
+import { useEffect } from 'react';
+import { useState } from 'react';
 
-export class App extends Component {
-  state = {
-    page: 1,
-    query: '',
-    images: [],
-    error: '',
-    largeImageURL: '',
-    isLoading: false,
-  };
+export const App = () => {
+  const [page, setPage] = useState(1);
+  const [query, setQuery] = useState('');
+  const [images, setImages] = useState([]);
+  const [error, setError] = useState('');
+  const [largeImageURL, setLargeImageURL] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [showBtn, setShowBtn] = useState(false);
 
-  componentDidUpdate(_, prevState) {
-    try {
-      if (
-        prevState.page !== this.state.page ||
-        prevState.query !== this.state.query
-      ) {
-        this.setState({ isLoading: true });
-        const response = getElement(this.state.query, this.state.page);
-        response.then(({ hits, total, totalHits }) => {
-          this.setState(prevState => ({
-            images: [...prevState.images, ...hits],
-            showBtn: this.state.page < Math.ceil(totalHits / 12),
-          }));
-        });
-      }
-      
-    } catch (error) {
-      this.setState({ error: error.message });
-    } finally { 
-      if (prevState.isLoading){
-      this.setState(prevState => {
-        return { isLoading: false }})
-      }
-  }
-}
-
-  onFormSubmit = info => {
-    this.setState({
-      query: info,
-      page: 1,
-      images: [],
-      error: '',
-    });
-  };
-
-  onImageClick = link => {
-    this.setState({
-      largeImageURL: link,
-    });
-  };
-
-  onButtonClick = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
-  };
-
-  render() {
+  useEffect( () => {
+    if (!query){
+      return
+    }
+        setIsLoading(true);
+        getElement(query, page).then(({ hits, total, totalHits }) => {
+          setImages(prevState => [...prevState, ...hits])
+          setShowBtn(page < Math.ceil(totalHits / 12))
+        }).catch(error => setError(error.message))
+        .finally(() => setIsLoading(false))
+  }, [query, page])
+  
+    const onFormSubmit = info => {
+      setQuery(info);
+      setPage(1);
+      setImages([]);
+      setError('');
+    };
+  
+    const onImageClick = link => {
+      setLargeImageURL(link)
+    };
+  
+    const onButtonClick = () => {
+      setPage(prevState => (
+      prevState + 1
+      ));
+    };
 
     return (
       <>
-        <Searchbar onFormSubmit={this.onFormSubmit} />
-        {this.state.isLoading && ( <Loader /> )} 
+        <Searchbar onFormSubmit={onFormSubmit} />
+        {isLoading && ( <Loader /> )} 
         <ImageGallery
-          img={this.state.images}
-          onImageClick={this.onImageClick}
+          img={images}
+          onImageClick={onImageClick}
         />
-        {this.state.showBtn && (
-          <Button onButtonClick={this.onButtonClick} />
+        {showBtn && (
+          <Button onButtonClick={onButtonClick} />
         )}
-
-        {this.state.largeImageURL.length > 0 && (
+        {error && <p> {error} </p>}
+        {largeImageURL.length > 0 && (
           <Modal
-            largeImgUrl={this.state.largeImageURL}
-            onImageClick={this.onImageClick}
+            largeImgUrl={largeImageURL}
+            onImageClick={onImageClick}
           />
         )}
       </>
     );
-  }
 }

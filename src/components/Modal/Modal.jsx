@@ -23,14 +23,13 @@ export const Modal = ({ onImageClick, largeImgUrl }) => {
 
 
     return (
-      <div className={css.background} onClick={this.handleBackdrop}>
+      <div className={css.background} onClick={handleBackdrop}>
         <div className={css.modal}>
-          <img src={this.props.largeImgUrl} alt="" />
+          <img src={largeImgUrl} alt="" />
         </div>
       </div>
     );
   }
-}
 
 
 Modal.propTypes = {
